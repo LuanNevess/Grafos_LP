@@ -1,0 +1,13 @@
+digraph BFS {
+  A [style=filled, fillcolor=gold, penwidth=2.0, label="A (1º - Raiz, d=0)"];
+  B [style=filled, fillcolor=lightblue, label="B (2º, d=1)"];
+  C [style=filled, fillcolor=lightblue, label="C (3º, d=1)"];
+  D [style=filled, fillcolor=lightblue, label="D (4º, d=2)"];
+  E [style=filled, fillcolor="#d3d3d3", fontcolor="#555555", label="E (Inalcançado)"];
+  F [style=filled, fillcolor="#d3d3d3", fontcolor="#555555", label="F (Inalcançado)"];
+  A -> B [color=blue, penwidth=2.5];
+  A -> C [color=blue, penwidth=2.5];
+  B -> D [color=blue, penwidth=2.5];
+  E -> A [color=gray, style=dashed];
+  F -> E [color=gray, style=dashed];
+}

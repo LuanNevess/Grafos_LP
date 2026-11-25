@@ -1,0 +1,12 @@
+graph DFS {
+  A [style=filled, fillcolor=lightblue, label="A (3º, p=2)"];
+  B [style=filled, fillcolor=lightblue, label="B (2º, p=1)"];
+  C [style=filled, fillcolor=gold, penwidth=2.0, label="C (1º - Raiz, p=0)"];
+  D [style=filled, fillcolor=lightblue, label="D (4º, p=3)"];
+  E [style=filled, fillcolor=lightblue, label="E (5º, p=4)"];
+  A -- B [color=blue, penwidth=2.5, label="4"];
+  B -- C [color=blue, penwidth=2.5, label="2"];
+  C -- D [color=gray, style=dashed, label="5"];
+  A -- D [color=blue, penwidth=2.5, label="7"];
+  D -- E [color=blue, penwidth=2.5, label="3"];
+}

@@ -1,0 +1,12 @@
+graph BFS {
+  V1 [style=filled, fillcolor=gold, penwidth=2.0, label="V1 (1º - Raiz, d=0)"];
+  V2 [style=filled, fillcolor=lightblue, label="V2 (2º, d=1)"];
+  V3 [style=filled, fillcolor=lightblue, label="V3 (3º, d=1)"];
+  V4 [style=filled, fillcolor="#d3d3d3", fontcolor="#555555", label="V4 (Inalcançado)"];
+  V5 [style=filled, fillcolor="#d3d3d3", fontcolor="#555555", label="V5 (Inalcançado)"];
+  V6 [style=filled, fillcolor="#d3d3d3", fontcolor="#555555", label="V6 (Inalcançado)"];
+  V1 -- V2 [color=blue, penwidth=2.5];
+  V2 -- V3 [color=gray, style=dashed];
+  V1 -- V3 [color=blue, penwidth=2.5];
+  V4 -- V5 [color=gray, style=dashed];
+}

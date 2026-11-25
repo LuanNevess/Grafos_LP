@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analisador e Motor de Grafos Web</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --card-alt: #253349;
+            --border: #334155;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --success: #22c55e;
+            --danger: #ef4444;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+        }
+        header {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 { margin: 0; font-size: 1.25rem; color: var(--accent); }
+        header span { color: var(--muted); font-size: 0.9rem; }
+        .container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+            padding: 20px 24px;
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+        @media (max-width: 960px) { .container { grid-template-columns: 1fr; } }
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .panel h2 {
+            margin: 0 0 12px 0;
+            font-size: 1rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+            color: var(--accent);
+        }
+        label { display: block; font-size: 0.85rem; color: var(--muted); margin: 8px 0 4px; }
+        input[type="text"], input[type="number"], textarea, select {
+            width: 100%;
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 0.9rem;
+        }
+        textarea { font-family: ui-monospace, Consolas, monospace; min-height: 90px; }
+        .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .checkbox-row { display: flex; gap: 14px; margin: 10px 0; font-size: 0.9rem; }
+        button {
+            background: var(--accent);
+            color: #0f172a;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 14px;
+            cursor: pointer;
+            font-size: 0.88rem;
+        }
+        button:hover { background: var(--accent-hover); }
+        button.secondary { background: var(--card-alt); color: var(--text); border: 1px solid var(--border); }
+        button.danger { background: var(--danger); color: #fff; }
+        .project-list { list-style: none; padding: 0; margin: 0; }
+        .project-item {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            margin-bottom: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .project-item.active { border-color: var(--accent); background: var(--card-alt); }
+        .badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            padding: 2px 7px;
+            border-radius: 999px;
+            background: var(--card-alt);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            margin-right: 4px;
+        }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 960px) { .grid-2 { grid-template-columns: 1fr; } }
+        pre {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            overflow-x: auto;
+            font-size: 0.82rem;
+            color: #e2e8f0;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th, td { border: 1px solid var(--border); padding: 6px 8px; text-align: center; }
+        th { background: var(--card-alt); color: var(--accent); }
+        .img-box {
+            background: #fff;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            min-height: 180px;
+            max-height: 260px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .img-box img { max-width: 100%; max-height: 240px; width: auto; height: auto; object-fit: contain; }
+        .alert {
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-bottom: 14px;
+            font-size: 0.9rem;
+            display: none;
+        }
+        .alert.error { background: rgba(239,68,68,0.18); border: 1px solid var(--danger); color: #fecaca; display: block; }
+        .alert.ok { background: rgba(34,197,94,0.18); border: 1px solid var(--success); color: #bbf7d0; display: block; }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Grafos Web &bull; Matriz de Incidência e Algoritmos</h1>
+    <span>Spring Boot + Java 21 + Graphviz</span>
+</header>
+
+<div class="container">
+    <aside>
+        <div class="panel">
+            <h2>Projetos Salvos</h2>
+            <ul id="listaProjetos" class="project-list"></ul>
+        </div>
+
+        <div class="panel">
+            <h2>Novo Grafo</h2>
+            <label>Nome do Projeto</label>
+            <input type="text" id="novoNome" placeholder="Ex: Mapa de Cidades" />
+            <div class="checkbox-row">
+                <label style="margin:0"><input type="checkbox" id="novoOrientado" checked /> Orientado</label>
+                <label style="margin:0"><input type="checkbox" id="novoValorado" checked /> Valorado</label>
+            </div>
+            <button onclick="criarProjeto()">Criar Grafo</button>
+        </div>
+
+        <div class="panel">
+            <h2>Importar Arquivo DOT</h2>
+            <label>Nome</label>
+            <input type="text" id="dotNome" placeholder="Ex: Grafo Importado" />
+            <label>Conteúdo DOT</label>
+            <textarea id="dotConteudo" placeholder="digraph G { A -> B [label=&quot;5&quot;]; }"></textarea>
+            <button style="margin-top:8px" onclick="importarDot()">Importar DOT</button>
+        </div>
+    </aside>
+
+    <main>
+        <div id="alerta" class="alert"></div>
+
+        <div class="panel">
+            <h2>Edição Rápida do Grafo Selecionado</h2>
+            <div class="grid-2">
+                <div>
+                    <label>Adicionar Vértice</label>
+                    <div class="row">
+                        <input type="text" id="nomeVertice" placeholder="Ex: E" style="flex:1" />
+                        <button onclick="adicionarVertice()">+ Vértice</button>
+                    </div>
+                </div>
+                <div>
+                    <label>Adicionar Aresta</label>
+                    <div class="row">
+                        <input type="text" id="nomeAresta" placeholder="Nome (e1)" style="width:90px" />
+                        <input type="text" id="arestaOrigem" placeholder="Origem" style="width:80px" />
+                        <input type="text" id="arestaDestino" placeholder="Destino" style="width:80px" />
+                        <input type="number" id="arestaPeso" value="1" style="width:70px" />
+                        <button onclick="adicionarAresta()">+ Aresta</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="panel">
+                <h2>Propriedades & Matriz de Incidência</h2>
+                <div id="resumoProps">Selecione um grafo à esquerda.</div>
+                <div id="matrizContainer" style="margin-top:12px; overflow-x:auto"></div>
+            </div>
+
+            <div class="panel">
+                <h2>Visualização Gráfica (PNG)</h2>
+                <div class="row" style="margin-bottom:10px">
+                    <button class="secondary" onclick="carregarImagem('original')">Original</button>
+                    <button class="secondary" onclick="carregarImagem('malgrange')">Malgrange (CFC)</button>
+                    <button class="secondary" onclick="carregarImagem('malgrange-reduzido')">Grafo Reduzido</button>
+                </div>
+                <div class="img-box">
+                    <img id="imgGrafo" alt="Visualização do grafo" style="display:none" />
+                    <span id="imgPlaceholder" style="color:#64748b">Nenhuma imagem gerada</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Execução de Algoritmos</h2>
+            <div class="row" style="margin-bottom:12px">
+                <input type="text" id="algOrigem" placeholder="Vértice inicial / origem (ex: A)" style="width:200px" />
+                <input type="text" id="algDestino" placeholder="Destino p/ Dijkstra (ex: D)" style="width:200px" />
+                <button onclick="rodarDijkstra()">Dijkstra</button>
+                <button onclick="rodarBusca('bfs')">BFS</button>
+                <button onclick="rodarBusca('dfs')">DFS</button>
+                <button onclick="rodarAGM('kruskal')">Kruskal</button>
+                <button onclick="rodarAGM('prim')">Prim</button>
+                <button onclick="rodarMalgrange()">Malgrange</button>
+            </div>
+            <pre id="resultadoAlg">Execute um algoritmo acima para visualizar o resultado e a tabela passo a passo.</pre>
+        </div>
+    </main>
+</div>
+
+<script>
+    let projetoAtualId = null;
+
+    function mostrarAlerta(msg, erro = false) {
+        const el = document.getElementById('alerta');
+        el.textContent = msg;
+        el.className = 'alert ' + (erro ? 'error' : 'ok');
+    }
+
+    async function api(url, options = {}) {
+        const resp = await fetch(url, {
+            headers: { 'Content-Type': 'application/json' },
+            ...options
+        });
+        const json = await resp.json();
+        if (!resp.ok || !json.sucesso) {
+            throw new Error(json.mensagem || 'Erro na requisição');
+        }
+        return json.dados;
+    }
+
+    async function carregarProjetos() {
+        const projetos = await api('/api/grafos');
+        const ul = document.getElementById('listaProjetos');
+        ul.innerHTML = '';
+        projetos.forEach(p => {
+            const li = document.createElement('li');
+            li.className = 'project-item' + (p.id === projetoAtualId ? ' active' : '');
+            li.innerHTML = `
+                <div>
+                    <strong>${p.nome}</strong><br/>
+                    <span class="badge">${p.orientado ? 'Orientado' : 'Não Orientado'}</span>
+                    <span class="badge">${p.valorado ? 'Valorado' : 'Não Valorado'}</span>
+                </div>
+                <button class="danger" onclick="excluirProjeto(event, ${p.id})">X</button>
+            `;
+            li.onclick = () => selecionarProjeto(p.id);
+            ul.appendChild(li);
+        });
+        if (!projetoAtualId && projetos.length > 0) {
+            selecionarProjeto(projetos[0].id);
+        }
+    }
+
+    async function selecionarProjeto(id) {
+        projetoAtualId = id;
+        await carregarProjetos();
+        await atualizarPropriedades();
+        carregarImagem('original');
+    }
+
+    async function criarProjeto() {
+        try {
+            const p = await api('/api/grafos', {
+                method: 'POST',
+                body: JSON.stringify({
+                    nome: document.getElementById('novoNome').value,
+                    orientado: document.getElementById('novoOrientado').checked,
+                    valorado: document.getElementById('novoValorado').checked
+                })
+            });
+            document.getElementById('novoNome').value = '';
+            mostrarAlerta('Grafo criado!');
+            await selecionarProjeto(p.id);
+        } catch (e) { mostrarAlerta(e.message, true); }
+    }
+
+    async function importarDot() {
+        try {
+            const p = await api('/api/grafos/importar-dot', {
+                method: 'POST',
+                body: JSON.stringify({
+                    nome: document.getElementById('dotNome').value,
+                    conteudoDot: document.getElementById('dotConteudo').value
+                })
+            });
+            mostrarAlerta('DOT importado!');
+            await selecionarProjeto(p.id);
+        } catch (e) { mostrarAlerta(e.message, true); }
+    }
+
+    async function excluirProjeto(ev, id) {
+        ev.stopPropagation();
+        try {
+            await api('/api/grafos/' + id, { method: 'DELETE' });
+            if (projetoAtualId === id) projetoAtualId = null;
+            mostrarAlerta('Projeto excluído.');
+            await carregarProjetos();
+        } catch (e) { mostrarAlerta(e.message, true); }
+    }
+
+    async function adicionarVertice() {
+        if (!projetoAtualId) return;
+        try {
+            const resumo = await api(`/api/grafos/${projetoAtualId}/vertices`, {
+                method: 'POST',
+                body: JSON.stringify({ nomeVertice: document.getElementById('nomeVertice').value })
+            });
+            document.getElementById('nomeVertice').value = '';
+            renderizarResumo(resumo);
+            carregarImagem('original');
+            mostrarAlerta('Vértice adicionado.');
+        } catch (e) { mostrarAlerta(e.message, true); }
+    }
+
+    async function adicionarAresta() {
+        if (!projetoAtualId) return;
+        try {
+            const resumo = await api(`/api/grafos/${projetoAtualId}/arestas`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    nomeAresta: document.getElementById('nomeAresta').value,
+                    origem: document.getElementById('arestaOrigem').value,
+                    destino: document.getElementById('arestaDestino').value,
+                    peso: parseInt(document.getElementById('arestaPeso').value || '1', 10)
+                })
+            });
+            renderizarResumo(resumo);
+            carregarImagem('original');
+            mostrarAlerta('Aresta adicionada.');
+        } catch (e) { mostrarAlerta(e.message, true); }
+    }
+
+    async function atualizarPropriedades() {
+        if (!projetoAtualId) return;
+        try {
+            const resumo = await api(`/api/grafos/${projetoAtualId}/propriedades`);
+            renderizarResumo(resumo);
+        } catch (e) { mostrarAlerta(e.message, true); }
+    }
+
+    function renderizarResumo(r) {
+        document.getElementById('resumoProps').innerHTML = `
+            <div style="font-size:0.9rem">
+                <strong>Ordem (|V|):</strong> ${r.ordem} &nbsp;|&nbsp;
+                <strong>Tamanho (|E|):</strong> ${r.tamanho}<br/>
+                <strong>Simples:</strong> ${r.simples ? 'Sim' : 'Não'} &nbsp;|&nbsp;
+                <strong>Regular:</strong> ${r.regular ? 'Sim' : 'Não'} &nbsp;|&nbsp;
+                <strong>Completo:</strong> ${r.completo ? 'Sim' : 'Não'}<br/>
+                <strong>Laços:</strong> ${r.lacos.length ? r.lacos.join(', ') : 'Nenhum'}<br/>
+                ${r.orientado ? `<strong>Fontes:</strong> ${r.fontes.join(', ') || 'Nenhuma'} | <strong>Sumidouros:</strong> ${r.sumidouros.join(', ') || 'Nenhum'}` : `<strong>Folhas:</strong> ${r.folhas.join(', ') || 'Nenhuma'}`}
+            </div>
+        `;
+        const m = r.matrizIncidencia;
+        if (!m || m.vertices.length === 0) {
+            document.getElementById('matrizContainer').innerHTML = '<small style="color:#94a3b8">Matriz vazia</small>';
+            return;
+        }
+        let html = '<table><thead><tr><th>V \\ E</th>';
+        m.arestas.forEach(a => html += `<th>${a}</th>`);
+        html += '</tr></thead><tbody>';
+        m.vertices.forEach((v, i) => {
+            html += `<tr><th>${v}</th>`;
+            m.valores[i].forEach(val => html += `<td>${val}</td>`);
+            html += '</tr>';
+        });
+        html += '</tbody></table>';
+        document.getElementById('matrizContainer').innerHTML = html;
+    }
+
+    function carregarImagem(modo) {
+        if (!projetoAtualId) return;
+        const img = document.getElementById('imgGrafo');
+        const ph = document.getElementById('imgPlaceholder');
+        const vIni = encodeURIComponent(document.getElementById('algOrigem').value || '');
+        const url = `/api/grafos/${projetoAtualId}/imagem?modo=${modo}&verticeInicial=${vIni}&_t=${Date.now()}`;
+        img.onload = () => { img.style.display = 'inline'; ph.style.display = 'none'; };
+        img.onerror = () => { img.style.display = 'none'; ph.style.display = 'inline'; ph.textContent = 'Não foi possível renderizar (verifique se o grafo possui vértices ou se o algoritmo se aplica).'; };
+        img.src = url;
+    }
+
+    async function rodarDijkstra() {
+        if (!projetoAtualId) return;
+        try {
+            const o = encodeURIComponent(document.getElementById('algOrigem').value);
+            const d = encodeURIComponent(document.getElementById('algDestino').value);
+            const res = await api(`/api/grafos/${projetoAtualId}/algoritmos/dijkstra?origem=${o}&destino=${d}`);
+            document.getElementById('resultadoAlg').textContent =
+                `Caminho: ${res.temCaminho ? res.caminhoFormatado : 'Inexistente'}\nCusto total: ${res.custoTotal}\n\n${res.tabelaExecucao}`;
+        } catch (e) { mostrarAlerta(e.message, true); }
+    }
+
+    async function rodarBusca(tipo) {
+        if (!projetoAtualId) return;
+        try {
+            const v = encodeURIComponent(document.getElementById('algOrigem').value);
+            const res = await api(`/api/grafos/${projetoAtualId}/algoritmos/${tipo}?verticeInicial=${v}`);
+            document.getElementById('resultadoAlg').textContent = `${res.relatorio}\n${res.tabelaExecucao}`;
+            carregarImagem(tipo);
+        } catch (e) { mostrarAlerta(e.message, true); }
+    }
+
+    async function rodarAGM(alg) {
+        if (!projetoAtualId) return;
+        try {
+            const v = encodeURIComponent(document.getElementById('algOrigem').value || '');
+            const q = alg === 'prim' && v ? `?verticeInicial=${v}` : '';
+            const res = await api(`/api/grafos/${projetoAtualId}/algoritmos/${alg}${q}`);
+            const arestas = res.arestas.map(a => `${a.nome}(${a.origem}-${a.destino}, p=${a.peso})`).join(', ');
+            document.getElementById('resultadoAlg').textContent =
+                `Algoritmo: ${res.algoritmo}\nConexo: ${res.conexo ? 'Sim' : 'Não'}\nComponentes: ${res.numeroComponentes}\nPeso Total: ${res.pesoTotal}\nArestas selecionadas: ${arestas}`;
+        } catch (e) { mostrarAlerta(e.message, true); }
+    }
+
+    async function rodarMalgrange() {
+        if (!projetoAtualId) return;
+        try {
+            const res = await api(`/api/grafos/${projetoAtualId}/algoritmos/malgrange`);
+            const comps = res.componentes.map(c => `CFC ${c.indice} (${c.cor}): {${c.vertices.join(', ')}}`).join('\n');
+            document.getElementById('resultadoAlg').textContent =
+                `Componentes Fortemente Conexas (${res.numeroComponentes}):\n${comps}\n\n${res.tabelaExecucao}`;
+            carregarImagem('malgrange');
+        } catch (e) { mostrarAlerta(e.message, true); }
+    }
+
+    carregarProjetos();
+</script>
+</body>
+</html>

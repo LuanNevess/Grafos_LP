@@ -1,0 +1,16 @@
+{
+  "name": "grafos-web",
+  "version": "1.0.0",
+  "description": "Este projeto implementa uma representação de grafos utilizando **Matriz de Incidência** em Java, com interface interativa via terminal, cálculo de propriedades, busca de caminhos mínimos (Dijkstra) e Árvore/Floresta Geradora Mínima (Kruskal e Prim).",
+  "main": "index.js",
+  "scripts": {
+    "test": "cypress run --browser edge",
+    "cy:open": "cypress open"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "cypress": "^16.3.0"
+  }
+}
